@@ -3,7 +3,8 @@ import mediapipe as mp
 import numpy as np
 from pynput.keyboard import Controller
 import time
-from win32api import GetSystemMetrics
+import math
+import pyautogui
 
 class VirtualKeyboard:
     def __init__(self):
@@ -85,18 +86,18 @@ class VirtualKeyboard:
         return None
     
     def detect_click(self, hand_landmarks):
-        # Get index and middle finger tips and calculate distance
+        # Get index finger tip and thumb tip positions
         index_tip = hand_landmarks.landmark[8]  # Index fingertip
-        middle_tip = hand_landmarks.landmark[12]  # Middle fingertip
+        thumb_tip = hand_landmarks.landmark[4]  # Thumb tip
         
-        # Calculate Euclidean distance between fingertips
-        distance = np.sqrt(
-            (index_tip.x - middle_tip.x) ** 2 + 
-            (index_tip.y - middle_tip.y) ** 2
+        # Calculate distance between thumb and index finger
+        distance = math.sqrt(
+            (thumb_tip.x - index_tip.x) ** 2 + 
+            (thumb_tip.y - index_tip.y) ** 2
         )
         
-        # If distance is small enough, consider it a click
-        return distance < 0.03  # Threshold value, adjust if needed
+        # Return True if fingers are close enough (touching)
+        return distance < 0.05  # Adjust threshold if needed
     
     def run(self):
         cap = cv2.VideoCapture(0)
@@ -104,14 +105,16 @@ class VirtualKeyboard:
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
         
         # Get screen resolution and calculate window position
-        screen_width = GetSystemMetrics(0)
-        screen_height = GetSystemMetrics(1)
+        screen_width = pyautogui.size()[0]
+        screen_height = pyautogui.size()[1]
         window_x = (screen_width - self.window_width) // 2
         window_y = screen_height - self.window_height - 40  # 40 pixels from bottom
         
-        # Create named window and set its position
+        # Create and position control window
         cv2.namedWindow("Virtual Keyboard")
-        cv2.moveWindow("Virtual Keyboard", window_x, window_y)  # Position at bottom-middle
+        cv2.moveWindow("Virtual Keyboard", window_x, window_y)
+        
+        prev_clicked = False
         
         while True:
             success, camera_img = cap.read()
@@ -120,7 +123,7 @@ class VirtualKeyboard:
                 
             camera_img = cv2.flip(camera_img, 1)  # Mirror image
             
-            # Create a black background with smaller size
+            # Create a black background
             img = np.zeros((self.window_height, self.window_width, 3), dtype=np.uint8)
             
             rgb_img = cv2.cvtColor(camera_img, cv2.COLOR_BGR2RGB)
@@ -129,30 +132,50 @@ class VirtualKeyboard:
             self.draw_keyboard(img)
             
             if results.multi_hand_landmarks:
-                for hand_landmarks in results.multi_hand_landmarks:
-                    # Scale hand landmarks to smaller window
-                    index_tip = hand_landmarks.landmark[8]
-                    h, w, _ = img.shape
-                    finger_x = int(index_tip.x * w)
-                    finger_y = int(index_tip.y * h)
-                    
-                    # Keep cursor within window bounds
-                    finger_x = max(0, min(finger_x, w-1))
-                    finger_y = max(0, min(finger_y, h-1))
-                    
-                    # Draw circle at fingertip
-                    cv2.circle(img, (finger_x, finger_y), 5, (0, 255, 0), cv2.FILLED)
-                    
-                    # Check for clicking gesture
-                    current_time = time.time()
-                    if (self.detect_click(hand_landmarks) and 
-                        current_time - self.last_click_time > self.click_cooldown):
-                        clicked_key = self.get_clicked_key((finger_x, finger_y))
-                        if clicked_key:
-                            self.keyboard.press(clicked_key.lower())
-                            self.keyboard.release(clicked_key.lower())
-                            print(f"Pressed: {clicked_key}")
-                            self.last_click_time = current_time
+                hand_landmarks = results.multi_hand_landmarks[0]
+                
+                # Get index fingertip position
+                index_tip = hand_landmarks.landmark[8]
+                h, w, _ = img.shape
+                finger_x = int(index_tip.x * w)
+                finger_y = int(index_tip.y * h)
+                
+                # Keep cursor within window bounds
+                finger_x = max(0, min(finger_x, w-1))
+                finger_y = max(0, min(finger_y, h-1))
+                
+                # Draw cursor
+                cv2.circle(img, (finger_x, finger_y), 5, (0, 255, 0), cv2.FILLED)
+                
+                # Check for clicking gesture (thumb-index touch)
+                is_clicked = self.detect_click(hand_landmarks)
+                
+                # Handle key press
+                current_time = time.time()
+                if is_clicked and not prev_clicked and current_time - self.last_click_time > self.click_cooldown:
+                    clicked_key = self.get_clicked_key((finger_x, finger_y))
+                    if clicked_key:
+                        self.keyboard.press(clicked_key.lower())
+                        self.keyboard.release(clicked_key.lower())
+                        print(f"Pressed: {clicked_key}")
+                        self.last_click_time = current_time
+                        # Visual feedback for key press
+                        cv2.circle(img, (finger_x, finger_y), 10, (0, 255, 255), -1)
+                
+                # Update status text
+                status_text = "Active: "
+                if is_clicked:
+                    status_text += "Pressing"
+                else:
+                    status_text += "Hovering"
+                
+                cv2.putText(img, status_text, (10, 30), 
+                           cv2.FONT_HERSHEY_PLAIN, 1, (0, 255, 0), 1)
+                
+                prev_clicked = is_clicked
+            else:
+                cv2.putText(img, "No Hand", (70, 30), 
+                           cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 255), 1)
             
             cv2.imshow("Virtual Keyboard", img)
             
