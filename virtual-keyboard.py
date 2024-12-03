@@ -19,15 +19,6 @@ class VirtualKeyboard:
         )
         self.mp_draw = mp.solutions.drawing_utils
         
-        # Control key combinations
-        self.ctrl_combinations = {
-            'C': 'Copy',
-            'V': 'Paste',
-            'X': 'Cut',
-            'Z': 'Undo',
-            'Y': 'Redo'
-        }
-        
         # Define the keyboard layout with normal and shift states
         self.keys = {
             'normal': [
@@ -123,42 +114,25 @@ class VirtualKeyboard:
                 width = self.get_key_width(key)
                 
                 # Draw button background
-                background_color = (50, 50, 50)  # Default dark gray
-                
-                # Highlight control combinations when Ctrl is pressed
-                if self.ctrl_pressed and key.upper() in self.ctrl_combinations:
-                    background_color = (0, 50, 100)  # Dark blue for ctrl combinations
-                
                 cv2.rectangle(img, (current_x, current_y), 
                             (current_x + width, current_y + self.button_height), 
-                            background_color, -1)
+                            (50, 50, 50), -1)  # Filled dark gray background
                 
                 # Draw button border
-                border_color = (255, 255, 255)  # Default white
-                if key == 'Ctrl' and self.ctrl_pressed:
-                    border_color = (0, 255, 0)  # Green for active Ctrl
-                elif key == 'Shift' and self.shift_pressed:
-                    border_color = (0, 255, 0)  # Green for active Shift
-                elif self.ctrl_pressed and key.upper() in self.ctrl_combinations:
-                    border_color = (0, 255, 255)  # Yellow for available ctrl combinations
-                
+                border_color = (0, 255, 0) if key in ['Shift', 'Caps'] and self.shift_pressed else (255, 255, 255)
                 cv2.rectangle(img, (current_x, current_y), 
                             (current_x + width, current_y + self.button_height), 
                             border_color, 2)
                 
                 # Draw text
-                text = key
-                if self.ctrl_pressed and key.upper() in self.ctrl_combinations:
-                    text = f"{key} ({self.ctrl_combinations[key.upper()]})"
-                
-                text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_PLAIN, 1, 1)[0]
+                text_size = cv2.getTextSize(key, cv2.FONT_HERSHEY_PLAIN, 1, 1)[0]
                 text_x = current_x + (width - text_size[0]) // 2
                 text_y = current_y + (self.button_height + text_size[1]) // 2
-                cv2.putText(img, text, (text_x, text_y), 
+                cv2.putText(img, key, (text_x, text_y), 
                            cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 1)
                 
                 current_x += width + self.button_margin
-            
+
             current_y += self.button_height + self.button_margin
 
     def get_clicked_key(self, finger_pos):
@@ -209,29 +183,26 @@ class VirtualKeyboard:
             # Handle regular keys
             char = key
             if len(key) == 1:  # Only process single characters
-                # Handle Ctrl combinations
-                if self.ctrl_pressed:
-                    upper_key = key.upper()
-                    if upper_key in self.ctrl_combinations:
-                        with self.keyboard.pressed(Key.ctrl):
-                            self.keyboard.press(key.lower())
-                            self.keyboard.release(key.lower())
-                        print(f"Executed: Ctrl+{key} ({self.ctrl_combinations[upper_key]})")
-                        return
-                
-                # Handle normal character input
                 if self.caps_lock != self.shift_pressed:  # XOR
                     char = key.upper()
                 else:
                     char = key.lower()
-                
-                # Press the key
-                self.keyboard.press(char)
-                self.keyboard.release(char)
-                
-                # Reset shift if it was pressed
-                if self.shift_pressed and key != 'Shift':
-                    self.shift_pressed = False
+            
+            # Handle Ctrl combinations
+            if self.ctrl_pressed:
+                if key.lower() in ['c', 'v', 'x', 'z', 'a']:
+                    with self.keyboard.pressed(Key.ctrl):
+                        self.keyboard.press(key.lower())
+                        self.keyboard.release(key.lower())
+                return
+            
+            # Press the key
+            self.keyboard.press(char)
+            self.keyboard.release(char)
+            
+            # Reset shift if it was pressed
+            if self.shift_pressed and key != 'Shift':
+                self.shift_pressed = False
     
     def detect_click(self, hand_landmarks):
         # Get index finger tip and thumb tip positions
