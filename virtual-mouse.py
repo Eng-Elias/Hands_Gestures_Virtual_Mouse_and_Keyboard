@@ -52,45 +52,42 @@ class VirtualMouse:
         """Get positions of relevant fingers"""
         h, w, _ = img_shape
         
-        # Get index finger tip position
-        index_x = int(hand_landmarks.landmark[8].x * w)
-        index_y = int(hand_landmarks.landmark[8].y * h)
-        
-        # Get middle finger tip position
-        middle_x = int(hand_landmarks.landmark[12].x * w)
-        middle_y = int(hand_landmarks.landmark[12].y * h)
-        
-        # Get thumb tip position
-        thumb_x = int(hand_landmarks.landmark[4].x * w)
-        thumb_y = int(hand_landmarks.landmark[4].y * h)
-        
-        return {
-            'index': (index_x, index_y),
-            'middle': (middle_x, middle_y),
-            'thumb': (thumb_x, thumb_y)
+        # Get finger positions
+        landmarks = {
+            'thumb': (int(hand_landmarks.landmark[4].x * w), int(hand_landmarks.landmark[4].y * h)),
+            'index': (int(hand_landmarks.landmark[8].x * w), int(hand_landmarks.landmark[8].y * h)),
+            'middle': (int(hand_landmarks.landmark[12].x * w), int(hand_landmarks.landmark[12].y * h)),
+            'ring': (int(hand_landmarks.landmark[16].x * w), int(hand_landmarks.landmark[16].y * h))
         }
+        
+        # Get finger up/down status using y-coordinates of finger tips and their base joints
+        is_finger_up = {
+            'thumb': hand_landmarks.landmark[4].x > hand_landmarks.landmark[3].x,  # For thumb, check x coordinate
+            'index': hand_landmarks.landmark[8].y < hand_landmarks.landmark[6].y,
+            'middle': hand_landmarks.landmark[12].y < hand_landmarks.landmark[10].y,
+            'ring': hand_landmarks.landmark[16].y < hand_landmarks.landmark[14].y
+        }
+        
+        return landmarks, is_finger_up
     
-    def detect_gestures(self, finger_positions):
+    def detect_gestures(self, hand_landmarks, img_shape):
         """Detect different mouse gestures"""
-        # Distance between index and middle finger for click detection
-        click_distance = self.calculate_distance(
-            finger_positions['index'],
-            finger_positions['middle']
-        )
+        # Get finger positions and states
+        landmarks, is_finger_up = self.get_finger_positions(hand_landmarks, img_shape)
         
-        # Distance between thumb and index for right click detection
-        right_click_distance = self.calculate_distance(
-            finger_positions['thumb'],
-            finger_positions['index']
-        )
+        # Left click: thumb up and index up, others down
+        left_click = (is_finger_up['thumb'] and is_finger_up['index'] and 
+                     not is_finger_up['middle'] and not is_finger_up['ring'])
         
-        # Detect left click (index and middle finger close together)
-        left_click = click_distance < 40
+        # Right click: middle up and index up, others down
+        right_click = (not is_finger_up['thumb'] and is_finger_up['index'] and 
+                      is_finger_up['middle'] and not is_finger_up['ring'])
         
-        # Detect right click (thumb and index finger close together)
-        right_click = right_click_distance < 40
+        # Click and hold: middle up, ring up, and index up, thumb down
+        click_hold = (not is_finger_up['thumb'] and is_finger_up['index'] and 
+                     is_finger_up['middle'] and is_finger_up['ring'])
         
-        return left_click, right_click
+        return left_click, right_click, click_hold
     
     def move_mouse(self, finger_pos):
         """Move mouse cursor with smoothening"""
@@ -129,6 +126,7 @@ class VirtualMouse:
         
         prev_left_click = False
         prev_right_click = False
+        is_holding = False
         
         while True:
             success, img = cap.read()
@@ -147,14 +145,12 @@ class VirtualMouse:
             if results.multi_hand_landmarks:
                 hand_landmarks = results.multi_hand_landmarks[0]
                 
-                # Get finger positions
-                finger_positions = self.get_finger_positions(hand_landmarks, img.shape)
+                # Get finger positions and detect gestures
+                landmarks, _ = self.get_finger_positions(hand_landmarks, img.shape)
+                left_click, right_click, click_hold = self.detect_gestures(hand_landmarks, img.shape)
                 
                 # Move mouse based on index finger position
-                self.move_mouse(finger_positions['index'])
-                
-                # Detect clicks
-                left_click, right_click = self.detect_gestures(finger_positions)
+                self.move_mouse(landmarks['index'])
                 
                 # Handle left click
                 if left_click and not prev_left_click:
@@ -168,15 +164,36 @@ class VirtualMouse:
                     cv2.circle(control_img, (3*self.window_width//4, self.window_height//2), 
                              10, (255,0,0), -1)
                 
+                # Handle click and hold
+                if click_hold and not is_holding:
+                    pyautogui.mouseDown()
+                    is_holding = True
+                elif not click_hold and is_holding:
+                    pyautogui.mouseUp()
+                    is_holding = False
+                
+                # Update status text with current gesture
+                status_text = "Active: "
+                if left_click:
+                    status_text += "Left Click"
+                elif right_click:
+                    status_text += "Right Click"
+                elif click_hold:
+                    status_text += "Holding"
+                else:
+                    status_text += "Moving"
+                
+                cv2.putText(control_img, status_text, (10, 30), 
+                           cv2.FONT_HERSHEY_PLAIN, 1, (0,255,0), 1)
+                
                 prev_left_click = left_click
                 prev_right_click = right_click
-                
-                # Draw status indicators
-                cv2.putText(control_img, "Active", (70, 30), 
-                           cv2.FONT_HERSHEY_PLAIN, 1, (0,255,0), 1)
             else:
                 cv2.putText(control_img, "No Hand", (70, 30), 
                            cv2.FONT_HERSHEY_PLAIN, 1, (0,0,255), 1)
+                if is_holding:
+                    pyautogui.mouseUp()
+                    is_holding = False
             
             # Display control window
             cv2.imshow("Virtual Mouse Control", control_img)
