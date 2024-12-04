@@ -5,6 +5,11 @@ import pyautogui
 import math
 
 class VirtualMouse:
+    HANDS_LABELS = {
+        "Left": "Left",
+        "Right": "Right",
+    }
+
     def __init__(self):
         # Initialize MediaPipe Hand tracking
         self.mp_hands = mp.solutions.hands
@@ -142,7 +147,7 @@ class VirtualMouse:
             # Create control window
             control_img = np.zeros((self.window_height, self.window_width, 3), dtype=np.uint8)
             
-            if results.multi_hand_landmarks:
+            if results.multi_hand_landmarks and results.multi_handedness[0].classification[0].label == self.HANDS_LABELS['Right']:
                 hand_landmarks = results.multi_hand_landmarks[0]
                 
                 # Get finger positions and detect gestures
