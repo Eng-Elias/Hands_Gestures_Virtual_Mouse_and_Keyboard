@@ -3,6 +3,7 @@ import mediapipe as mp
 import numpy as np
 import pyautogui
 import math
+import time
 
 class VirtualMouse:
     HANDS_LABELS = {
@@ -31,6 +32,10 @@ class VirtualMouse:
         # Window properties
         self.window_width = 200
         self.window_height = 100
+        
+        # Double click settings
+        self.last_click_time = 0
+        self.double_click_threshold = 0.3  # seconds
         
         # Initialize PyAutoGUI settings
         pyautogui.FAILSAFE = False
@@ -159,9 +164,16 @@ class VirtualMouse:
                 
                 # Handle left click
                 if left_click and not prev_left_click:
-                    pyautogui.click()
-                    cv2.circle(control_img, (self.window_width//4, self.window_height//2), 
-                             10, (0,255,0), -1)
+                    current_time = time.time()
+                    if current_time - self.last_click_time < self.double_click_threshold:
+                        pyautogui.doubleClick()
+                        cv2.circle(control_img, (self.window_width//4, self.window_height//2), 
+                                 15, (0,255,255), -1)  # Yellow circle for double click
+                    else:
+                        pyautogui.click()
+                        cv2.circle(control_img, (self.window_width//4, self.window_height//2), 
+                                 10, (0,255,0), -1)
+                    self.last_click_time = current_time
                 
                 # Handle right click
                 if right_click and not prev_right_click:
