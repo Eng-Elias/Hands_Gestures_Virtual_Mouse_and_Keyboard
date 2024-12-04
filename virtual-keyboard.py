@@ -7,6 +7,11 @@ import math
 import pyautogui
 
 class VirtualKeyboard:
+    HANDS_LABELS = {
+        "Left": "Left",
+        "Right": "Right",
+    }
+
     def __init__(self):
         self.keyboard = Controller()
         
@@ -35,6 +40,14 @@ class VirtualKeyboard:
                 ['Tab', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '|'],
                 ['Caps', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '"', 'Enter'],
                 ['Shift', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?', 'Shift'],
+                ['Ctrl', 'Win', 'Alt', 'Space', 'Alt', 'Ctrl']
+            ],
+            'ctrl': [
+                ['Esc', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12'],
+                ['`', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 'Backspace'],
+                ['Tab', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '[', ']', '\\'],
+                ['Caps', 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ';', "'", 'Enter'],
+                ['Shift', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '/', 'Shift'],
                 ['Ctrl', 'Win', 'Alt', 'Space', 'Alt', 'Ctrl']
             ]
         }
@@ -103,10 +116,14 @@ class VirtualKeyboard:
         keyboard_start_y = 20
         current_y = keyboard_start_y
         
-        # Choose layout based on shift state
-        layout = self.keys['shift' if self.shift_pressed else 'normal']
+        # Choose layout based on shift or ctrl state
+        layout = 'normal'
+        if self.shift_pressed:
+            layout = 'shift'
+        elif self.ctrl_pressed:
+            layout = 'ctrl'
         
-        for row in layout:
+        for row in self.keys[layout]:
             current_x = keyboard_start_x
             max_height = self.button_height
             
@@ -119,7 +136,14 @@ class VirtualKeyboard:
                             (50, 50, 50), -1)  # Filled dark gray background
                 
                 # Draw button border
-                border_color = (0, 255, 0) if key in ['Shift', 'Caps'] and self.shift_pressed else (255, 255, 255)
+                border_color = (255, 255, 255)  # Default white
+                if (key == 'Shift' and self.shift_pressed) or (key == 'Caps' and self.caps_lock):
+                    border_color = (0, 255, 0)  # Green for shift/caps
+                elif self.ctrl_pressed and key in ['C', 'V', 'X', 'Z', 'Y']:
+                    border_color = (0, 255, 255)  # Yellow for ctrl combinations
+                elif key == 'Ctrl' and self.ctrl_pressed:
+                    border_color = (0, 255, 0)  # Green for ctrl
+                
                 cv2.rectangle(img, (current_x, current_y), 
                             (current_x + width, current_y + self.button_height), 
                             border_color, 2)
@@ -140,12 +164,16 @@ class VirtualKeyboard:
         keyboard_start_y = 20
         current_y = keyboard_start_y
         
-        # Choose layout based on shift state
-        layout = self.keys['shift' if self.shift_pressed else 'normal']
+        # Choose layout based on shift or ctrl state
+        layout = 'normal'
+        if self.shift_pressed:
+            layout = 'shift'
+        elif self.ctrl_pressed:
+            layout = 'ctrl'
         
         x, y = finger_pos
         
-        for row in layout:
+        for row in self.keys[layout]:
             current_x = keyboard_start_x
             
             for key in row:
@@ -190,10 +218,16 @@ class VirtualKeyboard:
             
             # Handle Ctrl combinations
             if self.ctrl_pressed:
-                if key.lower() in ['c', 'v', 'x', 'z', 'a']:
-                    with self.keyboard.pressed(Key.ctrl):
-                        self.keyboard.press(key.lower())
-                        self.keyboard.release(key.lower())
+                if key.lower() == 'c':
+                    pyautogui.hotkey('ctrl', 'c')
+                elif key.lower() == 'v':
+                    pyautogui.hotkey('ctrl', 'v')
+                elif key.lower() == 'x':
+                    pyautogui.hotkey('ctrl', 'x')
+                elif key.lower() == 'z':
+                    pyautogui.hotkey('ctrl', 'z')
+                elif key.lower() == 'y':
+                    pyautogui.hotkey('ctrl', 'y')
                 return
             
             # Press the key
@@ -251,7 +285,7 @@ class VirtualKeyboard:
             
             self.draw_keyboard(img)
             
-            if results.multi_hand_landmarks:
+            if results.multi_hand_landmarks and results.multi_handedness[0].classification[0].label == self.HANDS_LABELS['Left']:
                 hand_landmarks = results.multi_hand_landmarks[0]
                 
                 # Get index fingertip position
