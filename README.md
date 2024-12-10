@@ -39,7 +39,14 @@ This project provides a virtual mouse and keyboard interface using computer visi
   - Press 'q' or click the window close button to exit the application.
 
 ## Contributing
-Feel free to open issues or submit pull requests. Contributions are welcome!
+We welcome contributions from developers and users to enhance this project. Here are a few ways you can contribute:
+
+- **Suggest Features**: If you have an idea for a new feature or improvement, feel free to open an issue with your suggestion.
+- **Implement Features**: If you are a developer, you can fork the repository, implement a new feature, and submit a pull request. Please ensure your code follows clean code standards.
+- **Report Bugs**: If you encounter any bugs or issues, please report them by opening an issue.
+- **Improve Documentation**: Help us improve the documentation by suggesting changes or submitting pull requests with updates.
+
+Your contributions are greatly appreciated and help make this project better for everyone!
 
 ## License
 Shield: [![CC BY-NC-SA 4.0][cc-by-nc-sa-shield]][cc-by-nc-sa]
@@ -52,3 +59,12 @@ This work is licensed under a
 [cc-by-nc-sa]: http://creativecommons.org/licenses/by-nc-sa/4.0/
 [cc-by-nc-sa-image]: https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png
 [cc-by-nc-sa-shield]: https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg
+
+
+## Support
+
+If you find this project creative and would like to support its development with other creative projects, consider buying me a book! Your support will allow me to dedicate more time to enhancing and adding new features to this project and work on more creative projects.
+
+[https://www.buymeacoffee.com/eng_elias](https://www.buymeacoffee.com/eng_elias)
+
+[![Buy Me a Coffee](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExeW41NXV3ZXYxY2pvOG5lcjJueDF3NDFlcWNneDJ4MW9kY25jbWhzeiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/7kZE0z52Sd9zSESzDA/giphy.gif)](https://www.buymeacoffee.com/eng_elias)
