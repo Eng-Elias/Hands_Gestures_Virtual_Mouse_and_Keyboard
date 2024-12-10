@@ -131,8 +131,9 @@ class VirtualMouse:
         window_y = screen_height - self.window_height - 40  # 40 pixels from bottom
         
         # Create and position control window
-        cv2.namedWindow("Virtual Mouse Control")
-        cv2.moveWindow("Virtual Mouse Control", window_x, window_y)
+        WINDOW_NAME = "Virtual Mouse"
+        cv2.namedWindow(WINDOW_NAME)
+        cv2.moveWindow(WINDOW_NAME, window_x, window_y)
         
         prev_left_click = False
         prev_right_click = False
@@ -213,10 +214,11 @@ class VirtualMouse:
                     is_holding = False
             
             # Display control window
-            cv2.imshow("Virtual Mouse Control", control_img)
+            cv2.imshow(WINDOW_NAME, control_img)
             
-            # Exit on 'q' press
-            if cv2.waitKey(1) & 0xFF == ord('q'):
+            # Break the loop if 'q' is pressed or window is closed
+            key = cv2.waitKey(1)
+            if key == ord('q') or cv2.getWindowProperty(WINDOW_NAME, cv2.WND_PROP_VISIBLE) < 1:
                 break
         
         cap.release()

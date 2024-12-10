@@ -263,11 +263,13 @@ class VirtualKeyboard:
         window_x = (screen_width - self.window_width) // 2
         window_y = screen_height - self.window_height - 40  # 40 pixels from bottom
         
-        # Create and position control window with always on top property
-        cv2.namedWindow("Virtual Keyboard", cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO | cv2.WINDOW_GUI_EXPANDED)
-        cv2.setWindowProperty("Virtual Keyboard", cv2.WND_PROP_TOPMOST, 1)
-        cv2.moveWindow("Virtual Keyboard", window_x, window_y)
+        WINDOW_NAME = "Virtual Keyboard"
         
+        # Create and position window
+        cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO | cv2.WINDOW_GUI_EXPANDED)
+        cv2.setWindowProperty(WINDOW_NAME, cv2.WND_PROP_TOPMOST, 1)
+        cv2.moveWindow(WINDOW_NAME, window_x, window_y)
+
         prev_clicked = False
         
         while True:
@@ -330,9 +332,11 @@ class VirtualKeyboard:
                 cv2.putText(img, "No Hand", (70, 30), 
                            cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 255), 1)
             
-            cv2.imshow("Virtual Keyboard", img)
+            cv2.imshow(WINDOW_NAME, img)
             
-            if cv2.waitKey(1) & 0xFF == ord('q'):
+            # Break the loop if 'q' is pressed or window is closed
+            key = cv2.waitKey(1)
+            if key == ord('q') or cv2.getWindowProperty(WINDOW_NAME, cv2.WND_PROP_VISIBLE) < 1:
                 break
         
         cap.release()

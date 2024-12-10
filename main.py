@@ -100,9 +100,10 @@ class MouseAndKeyboard:
             combined_img[:, :camera_img.shape[1]] = camera_img
             combined_img[:, camera_img.shape[1]:] = img
 
-            cv2.imshow("Virtual Mouse and Keyboard", combined_img)
+            cv2.imshow(WINDOW_NAME, combined_img)
             
-            if cv2.waitKey(1) & 0xFF == ord('q'):
+            key = cv2.waitKey(1)
+            if key == ord('q') or cv2.getWindowProperty(WINDOW_NAME, cv2.WND_PROP_VISIBLE) < 1:
                 break
                 
 
