@@ -38,6 +38,11 @@ This project provides a virtual mouse and keyboard interface using computer visi
 - **General:**
   - Press 'q' or click the window close button to exit the application.
 
+## Medium Articles
+- [Part1](https://medium.com/@eng_elias/revolutionizing-input-building-an-ai-powered-virtual-mouse-and-keyboard-part1-from-concept-to-4d87ed931fd0)
+- [Part2](https://medium.com/@eng_elias/revolutionizing-input-building-an-ai-powered-virtual-mouse-and-keyboard-part2-diving-deep-the-6d08a57424fa)
+- [Part3](https://medium.com/@eng_elias/revolutionizing-input-building-an-ai-powered-virtual-mouse-and-keyboard-part3-the-road-ahead-ed65a37797e4)
+
 ## Contributing
 We welcome contributions from developers and users to enhance this project. Here are a few ways you can contribute:
 
