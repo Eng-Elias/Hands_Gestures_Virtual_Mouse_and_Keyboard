@@ -305,11 +305,3 @@ class VirtualKeyboard:
                     cv2.FONT_HERSHEY_PLAIN, 1, (255, 255, 255), 1)
         
         self.prev_clicked = is_clicked
-
-    def run(self):
-        pass
-        # TODO: Complete start function in main.py 
-        # by copying this code and replace self with self.keyboard 
-        # (in VirtualMouseAndKeyboard class)
-        # while True:
-        #     pass

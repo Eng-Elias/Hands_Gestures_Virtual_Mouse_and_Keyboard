@@ -187,20 +187,3 @@ class VirtualMouse:
         
         self.prev_left_click = left_click
         self.prev_right_click = right_click
-    
-    def run(self):
-        pass
-        
-        
-        # TODO: Complete start function in main.py 
-        # by copying this code and replace self with self.mouse 
-        # (in VirtualMouseAndKeyboard class)
-        # while True:
-
-            # if results.multi_hand_landmarks and results.multi_handedness[0].classification[0].label == self.HANDS_LABELS['Right']:
-                
-            # else:
-                
-
-        
-        
