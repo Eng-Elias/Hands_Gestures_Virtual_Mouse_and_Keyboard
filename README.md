@@ -1,4 +1,6 @@
-# AI Virtual Mouse and Keyboard
+# Hand-Gesture AI Virtual Mouse and Keyboard
+
+[![Hand-Gesture AI Virtual Mouse and Keyboard Demo Video](https://img.youtube.com/vi/Ka1fJVpSm98/0.jpg)](https://www.youtube.com/watch?v=Ka1fJVpSm98)
 
 ## Overview
 This project provides a virtual mouse and keyboard interface using computer vision and hand tracking. It leverages MediaPipe and OpenCV to detect hand gestures and translate them into mouse and keyboard actions.
